@@ -1,0 +1,13 @@
+bin/
+obj/
+.vs/
+.idea/
+.env
+TestResults/
+docs/
+.junie/
+
+# Configuración local y secretos de ASP.NET Core
+**/appsettings.Development.json
+**/appsettings.Local.json
+**/appsettings.*.local.json

@@ -1,0 +1,120 @@
+using System.Text.Json;
+
+namespace SmartPalm.ApiGateway.Tests;
+
+public class GatewayConfigurationTests
+{
+    private readonly JsonElement _root;
+
+    public GatewayConfigurationTests()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
+        using var document = JsonDocument.Parse(File.ReadAllText(path));
+        _root = document.RootElement.Clone();
+    }
+
+    [Fact]
+    public void Every_route_references_an_existing_cluster()
+    {
+        var reverseProxy = _root.GetProperty("ReverseProxy");
+        var clusterIds = reverseProxy.GetProperty("Clusters")
+            .EnumerateObject()
+            .Select(property => property.Name)
+            .ToHashSet(StringComparer.Ordinal);
+
+        foreach (var route in reverseProxy.GetProperty("Routes").EnumerateObject())
+        {
+            var clusterId = route.Value.GetProperty("ClusterId").GetString()
+                ?? throw new InvalidDataException($"Route '{route.Name}' has no ClusterId.");
+            Assert.Contains(clusterId, clusterIds);
+        }
+    }
+
+    [Fact]
+    public void Authentication_route_remains_anonymous_for_existing_clients()
+    {
+        var route = _root.GetProperty("ReverseProxy")
+            .GetProperty("Routes")
+            .GetProperty("identity-authentication");
+
+        Assert.Equal("anonymous", route.GetProperty("AuthorizationPolicy").GetString());
+        Assert.Equal(
+            "/api/v1/Authentication/{**catch-all}",
+            route.GetProperty("Match").GetProperty("Path").GetString());
+    }
+
+    [Fact]
+    public void Route_identifiers_are_unique()
+    {
+        var routeIds = _root.GetProperty("ReverseProxy")
+            .GetProperty("Routes")
+            .EnumerateObject()
+            .Select(property => property.Name)
+            .ToArray();
+
+        Assert.Equal(routeIds.Length, routeIds.Distinct(StringComparer.Ordinal).Count());
+    }
+
+    [Fact]
+    public void Gateway_declares_all_seven_microservice_clusters()
+    {
+        var actual = _root.GetProperty("ReverseProxy").GetProperty("Clusters").EnumerateObject().Select(x => x.Name).ToHashSet();
+        var expected = new[] { "identity-service", "crop-service", "device-service", "ingestion-service", "alert-service", "agronomy-service", "field-service" };
+        Assert.Equal(expected.Length, actual.Count);
+        Assert.All(expected, id => Assert.Contains(id, actual));
+    }
+
+    [Theory]
+    [InlineData("swagger-identity", "identity-service", "/swagger/services/identity/swagger.json")]
+    [InlineData("swagger-crop", "crop-service", "/swagger/services/crop/swagger.json")]
+    [InlineData("swagger-device", "device-service", "/swagger/services/device/swagger.json")]
+    [InlineData("swagger-ingestion", "ingestion-service", "/swagger/services/ingestion/swagger.json")]
+    [InlineData("swagger-alert", "alert-service", "/swagger/services/alert/swagger.json")]
+    [InlineData("swagger-agronomy", "agronomy-service", "/swagger/services/agronomy/swagger.json")]
+    [InlineData("swagger-field", "field-service", "/swagger/services/field/swagger.json")]
+    public void Swagger_routes_are_public_and_proxy_the_service_document(string routeId, string clusterId, string path)
+    {
+        var route = _root.GetProperty("ReverseProxy").GetProperty("Routes").GetProperty(routeId);
+
+        Assert.Equal(clusterId, route.GetProperty("ClusterId").GetString());
+        Assert.Equal("anonymous", route.GetProperty("AuthorizationPolicy").GetString());
+        Assert.Equal(path, route.GetProperty("Match").GetProperty("Path").GetString());
+        Assert.Equal(
+            "/swagger/v1/swagger.json",
+            route.GetProperty("Transforms")[0].GetProperty("PathSet").GetString());
+    }
+
+    [Theory]
+    [InlineData("ingestion-edge-readings", "ingestion-service", "/api/v1/edge-gateways/{gatewayMac}/sensor-readings/{**catch-all}")]
+    [InlineData("device-gateways", "device-service", "/api/v1/edge-gateways/{**catch-all}")]
+    [InlineData("agronomy-sector-recommendations", "agronomy-service", "/api/v1/sectors/{sectorId}/recommendations/{**catch-all}")]
+    [InlineData("field-api", "field-service", "/api/v1/field/{**catch-all}")]
+    [InlineData("field-sector-interventions", "field-service", "/api/v1/sectors/{sectorId}/interventions/{**catch-all}")]
+    public void Overlapping_contracts_are_routed_to_their_owning_service(string routeId, string clusterId, string path)
+    {
+        var route = _root.GetProperty("ReverseProxy").GetProperty("Routes").GetProperty(routeId);
+        Assert.Equal(clusterId, route.GetProperty("ClusterId").GetString());
+        Assert.Equal(path, route.GetProperty("Match").GetProperty("Path").GetString());
+    }
+
+    [Fact]
+    public void Swagger_and_existing_public_routes_are_anonymous()
+    {
+        var anonymous = _root.GetProperty("ReverseProxy").GetProperty("Routes").EnumerateObject()
+            .Where(x => x.Value.GetProperty("AuthorizationPolicy").GetString() == "anonymous").Select(x => x.Name).ToHashSet();
+        Assert.Equal(new[]
+        {
+            "device-connectivity",
+            "identity-authentication",
+            "identity-public-plans",
+            "ingestion-edge-readings",
+            "swagger-identity",
+            "swagger-crop",
+            "swagger-device",
+            "swagger-ingestion",
+            "swagger-alert",
+            "swagger-agronomy",
+            "swagger-field"
+        }.Order(), anonymous.Order());
+    }
+}

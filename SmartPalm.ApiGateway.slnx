@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SmartPalm.ApiGateway/SmartPalm.ApiGateway.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SmartPalm.ApiGateway.Tests/SmartPalm.ApiGateway.Tests.csproj" />
+  </Folder>
+</Solution>

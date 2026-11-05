@@ -1,0 +1,25 @@
+name: smartpalm-gateway
+services:
+  gateway:
+    build: .
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      Jwt__Issuer: ${JWT_ISSUER:-smartpalm.identity}
+      Jwt__Audience: ${JWT_AUDIENCE:-smartpalm.clients}
+      Jwt__Key: ${JWT_KEY:-SmartPalm-Local-Development-Key-Change-Me-2026}
+      ReverseProxy__Clusters__identity-service__Destinations__primary__Address: ${IDENTITY_SERVICE_URL:-http://host.docker.internal:5101}
+      ReverseProxy__Clusters__crop-service__Destinations__primary__Address: ${CROP_SERVICE_URL:-http://host.docker.internal:5102}
+      ReverseProxy__Clusters__device-service__Destinations__primary__Address: ${DEVICE_SERVICE_URL:-http://host.docker.internal:5103}
+      ReverseProxy__Clusters__ingestion-service__Destinations__primary__Address: ${INGESTION_SERVICE_URL:-http://host.docker.internal:5104}
+      ReverseProxy__Clusters__alert-service__Destinations__primary__Address: ${ALERT_SERVICE_URL:-http://host.docker.internal:5105}
+      ReverseProxy__Clusters__agronomy-service__Destinations__primary__Address: ${AGRONOMY_SERVICE_URL:-http://host.docker.internal:5106}
+      ReverseProxy__Clusters__field-service__Destinations__primary__Address: ${FIELD_SERVICE_URL:-http://host.docker.internal:5107}
+      DownstreamServices__HealthUrls__Identity: ${IDENTITY_SERVICE_URL:-http://host.docker.internal:5101}/health/ready
+      DownstreamServices__HealthUrls__Crop: ${CROP_SERVICE_URL:-http://host.docker.internal:5102}/health/ready
+      DownstreamServices__HealthUrls__Device: ${DEVICE_SERVICE_URL:-http://host.docker.internal:5103}/health/ready
+      DownstreamServices__HealthUrls__Ingestion: ${INGESTION_SERVICE_URL:-http://host.docker.internal:5104}/health/ready
+      DownstreamServices__HealthUrls__Alert: ${ALERT_SERVICE_URL:-http://host.docker.internal:5105}/health/ready
+      DownstreamServices__HealthUrls__Agronomy: ${AGRONOMY_SERVICE_URL:-http://host.docker.internal:5106}/health/ready
+      DownstreamServices__HealthUrls__Field: ${FIELD_SERVICE_URL:-http://host.docker.internal:5107}/health/ready
+    ports: ["${GATEWAY_PORT:-5100}:8080"]
