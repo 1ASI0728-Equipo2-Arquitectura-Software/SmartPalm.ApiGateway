@@ -183,6 +183,7 @@ public class GatewayConfigurationTests
     [InlineData("device-admin", "device-service", "/api/v1/admin/edge-gateways/{**catch-all}")]
     [InlineData("device-admin-iot", "device-service", "/api/v1/admin/iot-devices/{**catch-all}")]
     [InlineData("ingestion-admin-devices", "ingestion-service", "/api/v1/admin/devices/{**catch-all}")]
+    [InlineData("agronomy-admin-projections-reconcile", "agronomy-service", "/api/v1/admin/projections/reconcile")]
     [InlineData("alert-admin", "alert-service", "/api/v1/admin/alerts/{**catch-all}")]
     public void Administrator_routes_are_scoped_to_admin_paths(
         string routeId,
@@ -207,6 +208,29 @@ public class GatewayConfigurationTests
             new[] { "POST" },
             route.GetProperty("Match").GetProperty("Methods").EnumerateArray()
                 .Select(method => method.GetString()).ToArray());
+    }
+
+    [Fact]
+    public void Projection_reconciliation_route_is_administrator_post_only()
+    {
+        var route = _root.GetProperty("ReverseProxy")
+            .GetProperty("Routes")
+            .GetProperty("agronomy-admin-projections-reconcile");
+
+        Assert.Equal("agronomy-service", route.GetProperty("ClusterId").GetString());
+        Assert.Equal("Administrator", route.GetProperty("AuthorizationPolicy").GetString());
+        Assert.Equal(
+            "/api/v1/admin/projections/reconcile",
+            route.GetProperty("Match").GetProperty("Path").GetString());
+        Assert.Equal(
+            new[] { "POST" },
+            route.GetProperty("Match").GetProperty("Methods").EnumerateArray()
+                .Select(method => method.GetString()).ToArray());
+        Assert.Equal(
+            "http://localhost:5106",
+            _root.GetProperty("ReverseProxy").GetProperty("Clusters")
+                .GetProperty("agronomy-service").GetProperty("Destinations")
+                .GetProperty("primary").GetProperty("Address").GetString());
     }
 
     [Fact]
