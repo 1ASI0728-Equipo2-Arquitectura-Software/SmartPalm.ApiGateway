@@ -135,6 +135,7 @@ public class GatewayConfigurationTests
     [InlineData("identity-admin-subscriptions", "identity-service", "/api/v1/admin/subscriptions/{**catch-all}")]
     [InlineData("crop-admin", "crop-service", "/api/v1/admin/plantations/{**catch-all}")]
     [InlineData("device-admin", "device-service", "/api/v1/admin/edge-gateways/{**catch-all}")]
+    [InlineData("device-admin-iot", "device-service", "/api/v1/admin/iot-devices/{**catch-all}")]
     [InlineData("ingestion-admin-devices", "ingestion-service", "/api/v1/admin/devices/{**catch-all}")]
     [InlineData("alert-admin", "alert-service", "/api/v1/admin/alerts/{**catch-all}")]
     public void Administrator_routes_are_scoped_to_admin_paths(
@@ -147,6 +148,19 @@ public class GatewayConfigurationTests
         Assert.Equal(clusterId, route.GetProperty("ClusterId").GetString());
         Assert.Equal("Administrator", route.GetProperty("AuthorizationPolicy").GetString());
         Assert.Equal(path, route.GetProperty("Match").GetProperty("Path").GetString());
+    }
+
+    [Fact]
+    public void Iot_provisioning_route_is_post_only()
+    {
+        var route = _root.GetProperty("ReverseProxy")
+            .GetProperty("Routes")
+            .GetProperty("device-admin-iot");
+
+        Assert.Equal(
+            new[] { "POST" },
+            route.GetProperty("Match").GetProperty("Methods").EnumerateArray()
+                .Select(method => method.GetString()).ToArray());
     }
 
     [Fact]
