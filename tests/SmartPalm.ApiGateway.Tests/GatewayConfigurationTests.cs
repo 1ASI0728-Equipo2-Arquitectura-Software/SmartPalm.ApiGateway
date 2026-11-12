@@ -113,6 +113,52 @@ public class GatewayConfigurationTests
             _root.GetProperty("ReverseProxy").GetProperty("Clusters")
                 .GetProperty("ingestion-service").GetProperty("HttpRequest")
                 .GetProperty("RequestHeadersCopy").GetBoolean());
+        Assert.Equal(
+            "http://localhost:5104",
+            _root.GetProperty("ReverseProxy").GetProperty("Clusters")
+                .GetProperty("ingestion-service").GetProperty("Destinations")
+                .GetProperty("primary").GetProperty("Address").GetString());
+    }
+
+    [Fact]
+    public void Edge_sensor_readings_get_is_authenticated_and_uses_ingestion_service()
+    {
+        var route = _root.GetProperty("ReverseProxy")
+            .GetProperty("Routes")
+            .GetProperty("ingestion-edge-readings-get");
+
+        Assert.Equal("ingestion-service", route.GetProperty("ClusterId").GetString());
+        Assert.Equal("default", route.GetProperty("AuthorizationPolicy").GetString());
+        Assert.Equal(
+            "/api/v1/edge-gateways/{gatewayMac}/sensor-readings",
+            route.GetProperty("Match").GetProperty("Path").GetString());
+        Assert.Equal(
+            new[] { "GET" },
+            route.GetProperty("Match").GetProperty("Methods").EnumerateArray()
+                .Select(method => method.GetString()).ToArray());
+        Assert.Equal(
+            "http://localhost:5104",
+            _root.GetProperty("ReverseProxy").GetProperty("Clusters")
+                .GetProperty(route.GetProperty("ClusterId").GetString()!)
+                .GetProperty("Destinations").GetProperty("primary")
+                .GetProperty("Address").GetString());
+    }
+
+    [Fact]
+    public void Edge_sensor_readings_get_is_not_captured_by_the_device_gateway_catch_all()
+    {
+        var routes = _root.GetProperty("ReverseProxy").GetProperty("Routes");
+        var getRoute = routes.GetProperty("ingestion-edge-readings-get");
+        var deviceCatchAll = routes.GetProperty("device-gateways");
+
+        Assert.Equal("GET", getRoute.GetProperty("Match").GetProperty("Methods")[0].GetString());
+        Assert.Equal(
+            "/api/v1/edge-gateways/{**catch-all}",
+            deviceCatchAll.GetProperty("Match").GetProperty("Path").GetString());
+        Assert.False(deviceCatchAll.GetProperty("Match").TryGetProperty("Methods", out _));
+        Assert.NotEqual(
+            deviceCatchAll.GetProperty("ClusterId").GetString(),
+            getRoute.GetProperty("ClusterId").GetString());
     }
 
     [Fact]
