@@ -9,11 +9,33 @@ using SmartPalm.ApiGateway.Swagger;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var jwtIssuer = builder.Configuration["Jwt:Issuer"]
+var serviceMappings = new (string EnvVar, string Cluster, string Service)[]
+{
+    ("IDENTITY_SERVICE_URL", "identity-service", "Identity"),
+    ("CROP_SERVICE_URL", "crop-service", "Crop"),
+    ("DEVICE_SERVICE_URL", "device-service", "Device"),
+    ("INGESTION_SERVICE_URL", "ingestion-service", "Ingestion"),
+    ("ALERT_SERVICE_URL", "alert-service", "Alert"),
+    ("AGRONOMY_SERVICE_URL", "agronomy-service", "Agronomy"),
+    ("FIELD_SERVICE_URL", "field-service", "Field")
+};
+
+foreach (var (envVar, cluster, service) in serviceMappings)
+{
+    var url = builder.Configuration[envVar];
+    if (!string.IsNullOrWhiteSpace(url))
+    {
+        builder.Configuration[$"ReverseProxy:Clusters:{cluster}:Destinations:primary:Address"] = url;
+        builder.Configuration[$"SwaggerServices:{service}"] = url;
+        builder.Configuration[$"DownstreamServices:HealthUrls:{service}"] = $"{url.TrimEnd('/')}/health/ready";
+    }
+}
+
+var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? builder.Configuration["JWT_ISSUER"]
     ?? throw new InvalidOperationException("Jwt:Issuer is required.");
-var jwtAudience = builder.Configuration["Jwt:Audience"]
+var jwtAudience = builder.Configuration["Jwt:Audience"] ?? builder.Configuration["JWT_AUDIENCE"]
     ?? throw new InvalidOperationException("Jwt:Audience is required.");
-var jwtKey = builder.Configuration["Jwt:Key"]
+var jwtKey = builder.Configuration["Jwt:Key"] ?? builder.Configuration["JWT_KEY"]
     ?? throw new InvalidOperationException("Jwt:Key is required. Configure it through an environment variable.");
 
 if (Encoding.UTF8.GetByteCount(jwtKey) < 32)
