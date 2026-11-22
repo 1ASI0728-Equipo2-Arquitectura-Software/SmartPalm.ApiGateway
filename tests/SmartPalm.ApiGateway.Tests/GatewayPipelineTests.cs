@@ -26,6 +26,24 @@ public class GatewayPipelineTests
         await using var factory = CreateFactory(); using var client = factory.CreateClient();
         Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync("/api/field/visits")).StatusCode);
     }
+
+    [Fact]
+    public async Task Factory_starts_when_jwt_key_is_provided_via_fallback_env()
+    {
+        await using var factory = CreateFactory().WithWebHostBuilder(builder =>
+        {
+            builder.UseSetting("Jwt:Issuer", "");
+            builder.UseSetting("JWT_ISSUER", "smartpalm.identity.tests");
+            builder.UseSetting("Jwt:Audience", "");
+            builder.UseSetting("JWT_AUDIENCE", "smartpalm.clients.tests");
+            builder.UseSetting("Jwt:Key", "");
+            builder.UseSetting("JWT_KEY", JwtKey);
+        });
+
+        using var client = factory.CreateClient();
+        using var response = await client.GetAsync("/health/live");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
     private static WebApplicationFactory<Program> CreateFactory() => new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
     {
         builder.UseEnvironment("Testing"); builder.UseSetting("Jwt:Issuer", "smartpalm.identity.tests"); builder.UseSetting("Jwt:Audience", "smartpalm.clients.tests"); builder.UseSetting("Jwt:Key", JwtKey);

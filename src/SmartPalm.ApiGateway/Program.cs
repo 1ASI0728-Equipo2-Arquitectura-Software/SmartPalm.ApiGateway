@@ -31,12 +31,19 @@ foreach (var (envVar, cluster, service) in serviceMappings)
     }
 }
 
-var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? builder.Configuration["JWT_ISSUER"]
-    ?? throw new InvalidOperationException("Jwt:Issuer is required.");
-var jwtAudience = builder.Configuration["Jwt:Audience"] ?? builder.Configuration["JWT_AUDIENCE"]
-    ?? throw new InvalidOperationException("Jwt:Audience is required.");
-var jwtKey = builder.Configuration["Jwt:Key"] ?? builder.Configuration["JWT_KEY"]
-    ?? throw new InvalidOperationException("Jwt:Key is required. Configure it through an environment variable.");
+string GetConfigValue(string primaryKey, string fallbackKey, string errorMessage)
+{
+    var val = builder.Configuration[primaryKey];
+    if (string.IsNullOrWhiteSpace(val))
+    {
+        val = builder.Configuration[fallbackKey];
+    }
+    return !string.IsNullOrWhiteSpace(val) ? val : throw new InvalidOperationException(errorMessage);
+}
+
+var jwtIssuer = GetConfigValue("Jwt:Issuer", "JWT_ISSUER", "Jwt:Issuer is required.");
+var jwtAudience = GetConfigValue("Jwt:Audience", "JWT_AUDIENCE", "Jwt:Audience is required.");
+var jwtKey = GetConfigValue("Jwt:Key", "JWT_KEY", "Jwt:Key is required. Configure it through an environment variable.");
 
 if (Encoding.UTF8.GetByteCount(jwtKey) < 32)
 {
