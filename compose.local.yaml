@@ -15,6 +15,13 @@ services:
       ReverseProxy__Clusters__alert-service__Destinations__primary__Address: ${ALERT_SERVICE_URL:-http://host.docker.internal:5105}
       ReverseProxy__Clusters__agronomy-service__Destinations__primary__Address: ${AGRONOMY_SERVICE_URL:-http://host.docker.internal:5106}
       ReverseProxy__Clusters__field-service__Destinations__primary__Address: ${FIELD_SERVICE_URL:-http://host.docker.internal:5107}
+      SwaggerServices__Identity: ${IDENTITY_SERVICE_URL:-http://host.docker.internal:5101}
+      SwaggerServices__Crop: ${CROP_SERVICE_URL:-http://host.docker.internal:5102}
+      SwaggerServices__Device: ${DEVICE_SERVICE_URL:-http://host.docker.internal:5103}
+      SwaggerServices__Ingestion: ${INGESTION_SERVICE_URL:-http://host.docker.internal:5104}
+      SwaggerServices__Alert: ${ALERT_SERVICE_URL:-http://host.docker.internal:5105}
+      SwaggerServices__Agronomy: ${AGRONOMY_SERVICE_URL:-http://host.docker.internal:5106}
+      SwaggerServices__Field: ${FIELD_SERVICE_URL:-http://host.docker.internal:5107}
       DownstreamServices__HealthUrls__Identity: ${IDENTITY_SERVICE_URL:-http://host.docker.internal:5101}/health/ready
       DownstreamServices__HealthUrls__Crop: ${CROP_SERVICE_URL:-http://host.docker.internal:5102}/health/ready
       DownstreamServices__HealthUrls__Device: ${DEVICE_SERVICE_URL:-http://host.docker.internal:5103}/health/ready

@@ -64,6 +64,24 @@ public class GatewayConfigurationTests
         Assert.All(expected, id => Assert.Contains(id, actual));
     }
 
+    [Fact]
+    public void Base_configuration_has_no_localhost_downstream_defaults()
+    {
+        var serialized = _root.GetRawText();
+
+        Assert.DoesNotContain("localhost", serialized, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("host.docker.internal", serialized, StringComparison.OrdinalIgnoreCase);
+
+        var swaggerServices = _root.GetProperty("SwaggerServices").EnumerateObject();
+        Assert.All(swaggerServices, service =>
+            Assert.True(string.IsNullOrEmpty(service.Value.GetString())));
+
+        var healthUrls = _root.GetProperty("DownstreamServices")
+            .GetProperty("HealthUrls").EnumerateObject();
+        Assert.All(healthUrls, healthUrl =>
+            Assert.True(string.IsNullOrEmpty(healthUrl.Value.GetString())));
+    }
+
     [Theory]
     [InlineData("swagger-identity", "identity-service", "/swagger/services/identity/swagger.json")]
     [InlineData("swagger-crop", "crop-service", "/swagger/services/crop/swagger.json")]
@@ -114,7 +132,7 @@ public class GatewayConfigurationTests
                 .GetProperty("ingestion-service").GetProperty("HttpRequest")
                 .GetProperty("RequestHeadersCopy").GetBoolean());
         Assert.Equal(
-            "http://localhost:5104",
+            "",
             _root.GetProperty("ReverseProxy").GetProperty("Clusters")
                 .GetProperty("ingestion-service").GetProperty("Destinations")
                 .GetProperty("primary").GetProperty("Address").GetString());
@@ -137,7 +155,7 @@ public class GatewayConfigurationTests
             route.GetProperty("Match").GetProperty("Methods").EnumerateArray()
                 .Select(method => method.GetString()).ToArray());
         Assert.Equal(
-            "http://localhost:5104",
+            "",
             _root.GetProperty("ReverseProxy").GetProperty("Clusters")
                 .GetProperty(route.GetProperty("ClusterId").GetString()!)
                 .GetProperty("Destinations").GetProperty("primary")
@@ -227,7 +245,7 @@ public class GatewayConfigurationTests
             route.GetProperty("Match").GetProperty("Methods").EnumerateArray()
                 .Select(method => method.GetString()).ToArray());
         Assert.Equal(
-            "http://localhost:5106",
+            "",
             _root.GetProperty("ReverseProxy").GetProperty("Clusters")
                 .GetProperty("agronomy-service").GetProperty("Destinations")
                 .GetProperty("primary").GetProperty("Address").GetString());
