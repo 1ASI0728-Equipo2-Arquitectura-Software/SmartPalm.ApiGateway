@@ -1,0 +1,37 @@
+name: smartpalm-gateway
+
+services:
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      Jwt__Issuer: ${JWT_ISSUER:?set JWT_ISSUER in Coolify}
+      Jwt__Audience: ${JWT_AUDIENCE:?set JWT_AUDIENCE in Coolify}
+      Jwt__Key: ${JWT_KEY:?set JWT_KEY in Coolify}
+      ReverseProxy__Clusters__identity-service__Destinations__primary__Address: ${IDENTITY_SERVICE_URL:?set IDENTITY_SERVICE_URL in Coolify}
+      ReverseProxy__Clusters__crop-service__Destinations__primary__Address: ${CROP_SERVICE_URL:?set CROP_SERVICE_URL in Coolify}
+      ReverseProxy__Clusters__device-service__Destinations__primary__Address: ${DEVICE_SERVICE_URL:?set DEVICE_SERVICE_URL in Coolify}
+      ReverseProxy__Clusters__ingestion-service__Destinations__primary__Address: ${INGESTION_SERVICE_URL:?set INGESTION_SERVICE_URL in Coolify}
+      ReverseProxy__Clusters__alert-service__Destinations__primary__Address: ${ALERT_SERVICE_URL:?set ALERT_SERVICE_URL in Coolify}
+      ReverseProxy__Clusters__agronomy-service__Destinations__primary__Address: ${AGRONOMY_SERVICE_URL:?set AGRONOMY_SERVICE_URL in Coolify}
+      ReverseProxy__Clusters__field-service__Destinations__primary__Address: ${FIELD_SERVICE_URL:?set FIELD_SERVICE_URL in Coolify}
+      SwaggerServices__Identity: ${IDENTITY_SERVICE_URL:?set IDENTITY_SERVICE_URL in Coolify}
+      SwaggerServices__Crop: ${CROP_SERVICE_URL:?set CROP_SERVICE_URL in Coolify}
+      SwaggerServices__Device: ${DEVICE_SERVICE_URL:?set DEVICE_SERVICE_URL in Coolify}
+      SwaggerServices__Ingestion: ${INGESTION_SERVICE_URL:?set INGESTION_SERVICE_URL in Coolify}
+      SwaggerServices__Alert: ${ALERT_SERVICE_URL:?set ALERT_SERVICE_URL in Coolify}
+      SwaggerServices__Agronomy: ${AGRONOMY_SERVICE_URL:?set AGRONOMY_SERVICE_URL in Coolify}
+      SwaggerServices__Field: ${FIELD_SERVICE_URL:?set FIELD_SERVICE_URL in Coolify}
+      DownstreamServices__HealthUrls__Identity: ${IDENTITY_SERVICE_URL:?set IDENTITY_SERVICE_URL in Coolify}/health/ready
+      DownstreamServices__HealthUrls__Crop: ${CROP_SERVICE_URL:?set CROP_SERVICE_URL in Coolify}/health/ready
+      DownstreamServices__HealthUrls__Device: ${DEVICE_SERVICE_URL:?set DEVICE_SERVICE_URL in Coolify}/health/ready
+      DownstreamServices__HealthUrls__Ingestion: ${INGESTION_SERVICE_URL:?set INGESTION_SERVICE_URL in Coolify}/health/ready
+      DownstreamServices__HealthUrls__Alert: ${ALERT_SERVICE_URL:?set ALERT_SERVICE_URL in Coolify}/health/ready
+      DownstreamServices__HealthUrls__Agronomy: ${AGRONOMY_SERVICE_URL:?set AGRONOMY_SERVICE_URL in Coolify}/health/ready
+      DownstreamServices__HealthUrls__Field: ${FIELD_SERVICE_URL:?set FIELD_SERVICE_URL in Coolify}/health/ready
+    expose:
+      - "8080"

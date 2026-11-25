@@ -11,3 +11,4 @@ docs/
 **/appsettings.Development.json
 **/appsettings.Local.json
 **/appsettings.*.local.json
+!src/SmartPalm.ApiGateway/appsettings.Development.json

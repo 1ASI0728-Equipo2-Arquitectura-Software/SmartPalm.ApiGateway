@@ -40,6 +40,31 @@ dotnet run --project src/SmartPalm.ApiGateway
 
 El Gateway escucha en `http://localhost:5100`. Como contenedor: `docker compose -f compose.local.yaml up --build`.
 
+## Despliegue en Coolify/Vultr
+
+Usar el Dockerfile del repositorio y configurar el puerto interno `8080`. Exponer solamente el Gateway mediante el proxy de Coolify; no publicar puertos individuales de los microservicios.
+
+Variables obligatorias de ejecución en Coolify:
+
+```text
+ASPNETCORE_ENVIRONMENT=Production
+ASPNETCORE_URLS=http://+:8080
+JWT_ISSUER=smartpalm.identity
+JWT_AUDIENCE=smartpalm.clients
+JWT_KEY=<clave compartida de al menos 32 caracteres>
+IDENTITY_SERVICE_URL=http://<nombre-interno-o-ip-privada>:8080
+CROP_SERVICE_URL=http://<nombre-interno-o-ip-privada>:8080
+DEVICE_SERVICE_URL=http://<nombre-interno-o-ip-privada>:8080
+INGESTION_SERVICE_URL=http://<nombre-interno-o-ip-privada>:8080
+ALERT_SERVICE_URL=http://<nombre-interno-o-ip-privada>:8080
+AGRONOMY_SERVICE_URL=http://<nombre-interno-o-ip-privada>:8080
+FIELD_SERVICE_URL=http://<nombre-interno-o-ip-privada>:8080
+```
+
+El secreto `JWT_KEY` debe coincidir exactamente con Identity Service. Configurar las URLs mediante nombres internos resueltos por Coolify o direcciones privadas de Vultr; no usar `localhost`, `host.docker.internal` ni puertos públicos.
+
+En Docker Compose de Coolify se puede usar `compose.production.yaml`. Coolify debe declarar las variables anteriores como secretos de ejecución. El health check puede apuntar a `/health/live` y el check con dependencias a `/health/ready`.
+
 - `/health/live`: proceso del Gateway activo.
 - `/health/ready`: conectividad con los siete servicios configurados.
 

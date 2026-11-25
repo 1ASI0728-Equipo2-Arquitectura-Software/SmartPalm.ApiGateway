@@ -26,9 +26,43 @@ public class GatewayPipelineTests
         await using var factory = CreateFactory(); using var client = factory.CreateClient();
         Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync("/api/field/visits")).StatusCode);
     }
+
+    [Fact]
+    public async Task Factory_starts_when_jwt_key_is_provided_via_fallback_env()
+    {
+        await using var factory = CreateFactory().WithWebHostBuilder(builder =>
+        {
+            builder.UseSetting("Jwt:Issuer", "");
+            builder.UseSetting("JWT_ISSUER", "smartpalm.identity.tests");
+            builder.UseSetting("Jwt:Audience", "");
+            builder.UseSetting("JWT_AUDIENCE", "smartpalm.clients.tests");
+            builder.UseSetting("Jwt:Key", "");
+            builder.UseSetting("JWT_KEY", JwtKey);
+        });
+
+        using var client = factory.CreateClient();
+        using var response = await client.GetAsync("/health/live");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
     private static WebApplicationFactory<Program> CreateFactory() => new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
     {
         builder.UseEnvironment("Testing"); builder.UseSetting("Jwt:Issuer", "smartpalm.identity.tests"); builder.UseSetting("Jwt:Audience", "smartpalm.clients.tests"); builder.UseSetting("Jwt:Key", JwtKey);
+        var serviceAddresses = new Dictionary<string, string>
+        {
+            ["identity-service"] = "http://127.0.0.1:5101",
+            ["crop-service"] = "http://127.0.0.1:5102",
+            ["device-service"] = "http://127.0.0.1:5103",
+            ["ingestion-service"] = "http://127.0.0.1:5104",
+            ["alert-service"] = "http://127.0.0.1:5105",
+            ["agronomy-service"] = "http://127.0.0.1:5106",
+            ["field-service"] = "http://127.0.0.1:5107"
+        };
+        foreach (var (clusterId, address) in serviceAddresses)
+        {
+            builder.UseSetting(
+                $"ReverseProxy:Clusters:{clusterId}:Destinations:primary:Address",
+                address);
+        }
         for (var index = 0; index < 7; index++) builder.UseSetting($"DownstreamServices:HealthUrls:{index}", null);
     });
 }

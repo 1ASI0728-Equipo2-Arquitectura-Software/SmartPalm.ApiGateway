@@ -38,7 +38,7 @@ public sealed class OpenApiDocumentAggregatorTests
     {
         var options = CreateOptions();
         var documents = CreateResponses(options, index => index == 1 ? "/api/v1/duplicate" : $"/api/v1/service-{index}");
-        documents["identity"] = CreateDocument("/api/v1/duplicate", "IdentitySchema", "identity-operation", "Authentication");
+        documents["identity-api"] = CreateDocument("/api/v1/duplicate", "IdentitySchema", "identity-operation", "Authentication");
         using var client = CreateClient(documents);
         var aggregator = CreateAggregator(options, client);
 
@@ -53,8 +53,8 @@ public sealed class OpenApiDocumentAggregatorTests
     {
         var options = CreateOptions();
         var documents = CreateResponses(options, index => $"/api/v1/service-{index}");
-        documents["identity"] = CreateDocument("/api/v1/identity", "SharedSchema", "identity-operation", "Authentication");
-        documents["crop"] = CreateDocument("/api/v1/crop", "SharedSchema", "crop-operation", "Plantations", "integer");
+        documents["identity-api"] = CreateDocument("/api/v1/identity", "SharedSchema", "identity-operation", "Authentication");
+        documents["crop-api"] = CreateDocument("/api/v1/crop", "SharedSchema", "crop-operation", "Plantations", "integer");
         using var client = CreateClient(documents);
         var aggregator = CreateAggregator(options, client);
 
@@ -68,8 +68,8 @@ public sealed class OpenApiDocumentAggregatorTests
     {
         var options = CreateOptions();
         var documents = CreateResponses(options, index => $"/api/v1/service-{index}");
-        documents["identity"] = CreateDocument("/api/v1/identity", "IdentitySchema", "shared-operation", "Authentication");
-        documents["crop"] = CreateDocument("/api/v1/crop", "CropSchema", "shared-operation", "Plantations");
+        documents["identity-api"] = CreateDocument("/api/v1/identity", "IdentitySchema", "shared-operation", "Authentication");
+        documents["crop-api"] = CreateDocument("/api/v1/crop", "CropSchema", "shared-operation", "Plantations");
         using var client = CreateClient(documents);
         var aggregator = CreateAggregator(options, client);
 
