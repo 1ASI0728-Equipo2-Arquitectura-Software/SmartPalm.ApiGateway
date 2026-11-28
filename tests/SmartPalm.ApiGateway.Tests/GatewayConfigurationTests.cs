@@ -271,4 +271,18 @@ public class GatewayConfigurationTests
             "swagger-field"
         }.Order(), anonymous.Order());
     }
+
+    [Fact]
+    public void Agronomy_cluster_activity_timeout_allows_ai_diagnosis_requests()
+    {
+        var timeoutRaw = _root.GetProperty("ReverseProxy")
+            .GetProperty("Clusters")
+            .GetProperty("agronomy-service")
+            .GetProperty("HttpRequest")
+            .GetProperty("ActivityTimeout")
+            .GetString();
+
+        Assert.True(TimeSpan.TryParse(timeoutRaw, out var timeout));
+        Assert.True(timeout >= TimeSpan.FromSeconds(45), $"Expected agronomy-service ActivityTimeout >= 45s, got {timeout}.");
+    }
 }
