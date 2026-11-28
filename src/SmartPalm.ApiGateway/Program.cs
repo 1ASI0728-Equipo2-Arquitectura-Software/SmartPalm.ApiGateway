@@ -31,6 +31,11 @@ foreach (var (envVar, cluster, service) in serviceMappings)
     }
 }
 
+// The draft route shares Field's destination, but not its request budget.
+const string fieldDestination = "ReverseProxy:Clusters:field-service:Destinations:primary:Address";
+const string draftDestination = "ReverseProxy:Clusters:field-report-draft-service:Destinations:primary:Address";
+builder.Configuration[draftDestination] = builder.Configuration[fieldDestination];
+
 string GetConfigValue(string primaryKey, string fallbackKey, string errorMessage)
 {
     var val = builder.Configuration[primaryKey];

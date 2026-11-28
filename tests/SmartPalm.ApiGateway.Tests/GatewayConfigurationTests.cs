@@ -56,12 +56,31 @@ public class GatewayConfigurationTests
     }
 
     [Fact]
-    public void Gateway_declares_all_seven_microservice_clusters()
+    public void Gateway_declares_all_seven_service_clusters_and_one_draft_cluster()
     {
         var actual = _root.GetProperty("ReverseProxy").GetProperty("Clusters").EnumerateObject().Select(x => x.Name).ToHashSet();
         var expected = new[] { "identity-service", "crop-service", "device-service", "ingestion-service", "alert-service", "agronomy-service", "field-service" };
-        Assert.Equal(expected.Length, actual.Count);
         Assert.All(expected, id => Assert.Contains(id, actual));
+        Assert.Equal(new[] { "field-report-draft-service" }, actual.Except(expected));
+    }
+
+    [Fact]
+    public void Visit_report_draft_has_an_authenticated_POST_route_and_an_isolated_timeout()
+    {
+        var proxy = _root.GetProperty("ReverseProxy");
+        var routes = proxy.GetProperty("Routes");
+        var route = routes.GetProperty("field-visit-report-draft");
+        Assert.Equal("default", route.GetProperty("AuthorizationPolicy").GetString());
+        Assert.Equal(-1, route.GetProperty("Order").GetInt32());
+        Assert.Equal("/api/v1/field/visits/{visitId:long}/report-draft", route.GetProperty("Match").GetProperty("Path").GetString());
+        Assert.Equal(new[] { "POST" }, route.GetProperty("Match").GetProperty("Methods").EnumerateArray().Select(x => x.GetString()));
+        const string draftCluster = "field-report-draft-service";
+        Assert.Equal(draftCluster, route.GetProperty("ClusterId").GetString());
+        Assert.Single(routes.EnumerateObject(), x => x.Value.GetProperty("ClusterId").GetString() == draftCluster);
+        Assert.Equal("field-service", routes.GetProperty("field-api").GetProperty("ClusterId").GetString());
+        var clusters = proxy.GetProperty("Clusters");
+        Assert.Equal("00:01:00", clusters.GetProperty(draftCluster).GetProperty("HttpRequest").GetProperty("ActivityTimeout").GetString());
+        Assert.Equal("00:00:10", clusters.GetProperty("field-service").GetProperty("HttpRequest").GetProperty("ActivityTimeout").GetString());
     }
 
     [Fact]

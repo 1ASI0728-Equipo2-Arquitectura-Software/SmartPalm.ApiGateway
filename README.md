@@ -18,6 +18,8 @@ El flujo físico de datos está dividido intencionalmente: Edge API envía las l
 | Agronomy | `http://localhost:5106` | Recomendaciones e informes |
 | Field | `http://localhost:5107` | Visitas, inspecciones e intervenciones |
 
+`POST /api/v1/field/visits/{visitId}/report-draft` también se enruta a Field y requiere JWT. Solo esa ruta usa un tiempo de espera de actividad de 60 segundos; las demás rutas de Field conservan 10 segundos. Ambos clústeres comparten el destino de `FIELD_SERVICE_URL`.
+
 Las rutas de ingestión del Edge API y la consulta de conectividad permanecen anónimas para preservar el flujo físico existente. El resto utiliza la política JWT predeterminada, salvo los endpoints administrativos, que requieren el rol `Administrator`.
 
 ## Relaciones entre clientes y servicios
