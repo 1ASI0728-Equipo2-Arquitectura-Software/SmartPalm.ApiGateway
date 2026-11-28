@@ -258,7 +258,6 @@ public class GatewayConfigurationTests
             .Where(x => x.Value.GetProperty("AuthorizationPolicy").GetString() == "anonymous").Select(x => x.Name).ToHashSet();
         Assert.Equal(new[]
         {
-            "device-connectivity",
             "identity-authentication",
             "identity-public-plans",
             "ingestion-edge-readings",
